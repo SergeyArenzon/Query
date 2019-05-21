@@ -24,8 +24,12 @@ class WordQuery: public QueryBase {
   public:
     WordQuery(const std::string &s): query_word(s) { }
     QueryResult eval(const TextQuery &t) const
-                    { return t.query(query_word); }
-	std::string rep() const { return query_word; }
+                    {
+        return t.query(query_word);
+                    }
+	std::string rep() const {
+        return query_word;
+    }
   private:
     std::string query_word;
 };

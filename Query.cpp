@@ -8,17 +8,92 @@
 #include <iterator>
 #include <stdexcept>
 #include <regex>
+#include <sstream>
+#include <string>
+#include <vector>
 using namespace std;
 ////////////////////////////////////////////////////////////////////////////////
 std::shared_ptr<QueryBase> QueryBase::factory(const string& s)
 {
-    regex oneWord("^\b[\\w']+\b$");
-    regex notWord("^\\bNOT [\\w']+$");
-    regex wordAndWord("^\\b[\\w']+ AND [\\w']+$");
-    regex wordOrWord("^\\b[\\w']+ OR [\\w']+$");
-    regex wordNumWord("^\\b[\\w']+ \\d+ [\\w']+$");
 
-  // if(s == "smart") return std::shared_ptr<QueryBase>(new WordQuery("smart"));
+    regex oneWord("^\\b[\\w']+\\b$");
+    regex notWord("^\\bNOT [\\w']+\\b$");
+    regex wordAndWord("^\\b[\\w']+ AND [\\w']+\\b$");
+    regex wordOrWord("^\\b[\\w']+ OR [\\w']+\\b$");
+    regex wordNumWord("^\\b[\\w']+ \\d+ [\\w']+\\b$");
+
+    if(regex_match(s,oneWord))
+        return std::shared_ptr<QueryBase>(new WordQuery(s));
+
+    else if(regex_match(s, notWord)){
+        istringstream f(s);
+        string x="";
+        string word;
+        while (getline(f, x, ' ')) {
+            if(x.compare("NOT")!=0)
+            word=x;
+        }
+        return std::shared_ptr<QueryBase>(new NotQuery(word));
+    }
+
+    else if(regex_match(s, wordAndWord)){
+        istringstream f(s);
+        string words[2] ;
+        string x="";
+        string word;
+        int i=0;
+        while (getline(f, x, ' ')) {
+            if(x.compare("AND")!=0){
+                words[i]=x;
+                i++;
+            }
+        }
+
+        return std::shared_ptr<QueryBase>(new AndQuery(words[0],words[1]));
+    }
+    else if(regex_match(s, wordOrWord)){
+        istringstream f(s);
+        string words[2] ;
+        string x="";
+        string word;
+        int i=0;
+        while (getline(f, x, ' ')) {
+            if(x.compare("OR")!=0){
+                words[i]=x;
+                i++;
+            }
+        }
+
+        return std::shared_ptr<QueryBase>(new OrQuery(words[0],words[1]));
+
+    }
+    else if(regex_match(s, wordNumWord)){
+
+        istringstream f(s);
+        string words[3] ;
+        string x="";
+        string word;
+        int i=0;
+        while (getline(f, x, ' ')) {
+                words[i]=x;
+                i++;
+
+        }
+        int distance=stoi(words[1]);
+
+        return std::shared_ptr<QueryBase>(new NQuery(words[0],words[2],distance));
+    }
+    else{
+        cout<<"Unrecognized search"<<endl;
+
+
+    }
+
+
+
+
+
+    // if(s == "smart") return std::shared_ptr<QueryBase>(new WordQuery("smart"));
 }
 ////////////////////////////////////////////////////////////////////////////////
 QueryResult NotQuery::eval(const TextQuery &text) const
